@@ -13,7 +13,6 @@ public class Client extends Application {
     public void start(Stage primaryStage) throws Exception {
         BorderPane mainPane = new BorderPane();
 
-
         Scene scene = new Scene(mainPane);
         primaryStage.setOnCloseRequest(e -> System.exit(0));
         primaryStage.setScene(scene);
