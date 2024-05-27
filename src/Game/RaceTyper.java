@@ -55,6 +55,7 @@ public class RaceTyper extends Application {
 
         BorderPane root = new BorderPane(vbox);
         Scene scene = new Scene(root, 800, 300);
+        wpmLabel.setText("WPM : 0");
 
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -114,13 +115,22 @@ public class RaceTyper extends Application {
             }
         }
 
+        if (!typedText.isEmpty()) {
+            long currentTime = System.currentTimeMillis();
+            double timeTaken = (currentTime - startTime) / 1000.0 / 60.0;
+            int wordCount = typedText.split("\\s+").length;
+            double wpm = wordCount / timeTaken;
+            wpmLabel.setText("WPM: " + (int) wpm);
+        } else {
+            wpmLabel.setText("WPM: 0");
+        }
+
         if (typedText.equals(targetText)) {
             endTime = System.currentTimeMillis();
             inputField.setEditable(false);
             calculateWPM();
         }
     }
-
     private String getTextFlowText() {
         StringBuilder sb = new StringBuilder();
         for (javafx.scene.Node node : textFlow.getChildren()) {
@@ -133,7 +143,7 @@ public class RaceTyper extends Application {
         if (!textDone) {
             long timeTaken = endTime - startTime;
             int wordCount = getTextFlowText().split("\\s+").length;
-            double minutes = timeTaken / 60000.0;
+            double minutes = timeTaken / 1000.0 / 60.0;
             double wpm = wordCount / minutes;
             wpmLabel.setText("WPM: " + (int) wpm);
             textDone = true;
