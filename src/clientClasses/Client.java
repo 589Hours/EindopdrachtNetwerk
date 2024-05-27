@@ -30,7 +30,7 @@ public class Client extends Application {
         userName = new TextField();
         topBar.getChildren().add(userName);
 
-        Button playButton = new Button();
+        Button playButton = new Button("Play");
         playButton.setOnAction(e ->{
             new Thread(this::handleConnection).start();
         });
@@ -46,17 +46,16 @@ public class Client extends Application {
 
     private void handleConnection() {
         try {
-            Socket socket = new Socket("localhost", 2002);
+            Socket socket = new Socket("localhost", 1234);
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             System.out.println("Reading data from socket...");
-            try{
-                this.writer.write(userName.getText());
-                System.out.println(userName.getText());
-                this.writer.flush();
-            } catch (IOException exception){
-                exception.printStackTrace();
-            }
+
+            //send username before handling connection
+            this.writer.write(userName.getText() + "\n");
+            System.out.println(userName.getText());
+            this.writer.flush();
+
             while (socket.isConnected()) {
                 String line = reader.readLine();
                 System.out.println(line);

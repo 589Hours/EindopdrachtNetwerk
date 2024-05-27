@@ -11,10 +11,11 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
         System.out.println("server");
-        ServerSocket serverSocket = new ServerSocket(2002);
+        ServerSocket serverSocket = new ServerSocket(1234);
         while (true) {
             Socket socket = serverSocket.accept();
             Connection connection = new Connection(socket);
+            System.out.println("found connection!");
             connections.add(connection);
         }
     }
@@ -30,7 +31,7 @@ public class Server {
             if(nickName.equals(connection.getUsername())) {
                 continue;
             }
-                connection.writeString( msg);
+                connection.writeString(msg);
         }
     }
 }
@@ -56,8 +57,8 @@ class Connection {
     private void receiveData() {
         try {
             while (socket.isConnected()) {
+
                 String line = reader.readLine();
-                System.out.println("Received:" + line);
                 if(line == null)
                     break;
                 System.out.println("Server: got " + line);
