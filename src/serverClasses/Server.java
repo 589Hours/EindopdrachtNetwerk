@@ -1,5 +1,7 @@
 package serverClasses;
 
+import javafx.scene.control.Alert;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,10 +10,13 @@ import java.util.ArrayList;
 
 public class Server {
     private static ArrayList<Connection> connections = new ArrayList<>();
+    public static ArrayList<String> usernames = new ArrayList<>();
+    private static ArrayList<Lobby> lobbies = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
         System.out.println("server");
         ServerSocket serverSocket = new ServerSocket(1234);
+        usernames.add("test");
         while (true) {
             Socket socket = serverSocket.accept();
             Connection connection = new Connection(socket);
@@ -34,12 +39,19 @@ public class Server {
                 connection.writeString(msg);
         }
     }
+
+    public static void sendLobbies(Connection connection) {
+        //TODO send lobbies through objectwriter
+        connection.writeObject(lobbies);
+    }
 }
 
 class Connection {
     private final Socket socket;
     private final BufferedReader reader;
     private final BufferedWriter writer;
+    private final ObjectInputStream inputStream;
+    private final ObjectOutputStream outputStream;
     private String username = null;
 
     public Connection(Socket socket) {
@@ -47,6 +59,9 @@ class Connection {
         try {
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.inputStream = new ObjectInputStream(socket.getInputStream());
+            this.outputStream = new ObjectOutputStream(socket.getOutputStream());
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -64,13 +79,19 @@ class Connection {
                 System.out.println("Server: got " + line);
 
                 if(username == null) {
-                    if(line.equals(""))
+                    if (line.equals("")) {
                         writer.write("Je moet wel een username invullen\n");
-                    else {
-                        username = line;
-                        writer.write("Je bent nu " + line + "\n");
-                        Server.WriteToAllExcept(line + " is net verbonden\n", username);
                     }
+                    else if (!Server.usernames.contains(line)) {
+                        username = line;
+                        Server.usernames.add(username);
+                        writer.write("Welkom!\n");
+                    } else {
+                        writer.write("Deze username bestaat al\n");
+                    }
+                } else {
+                    if (line.equals("send lobbies"));
+                    Server.sendLobbies(this);
                 }
                 writer.flush();
             }
@@ -84,12 +105,20 @@ class Connection {
         return this.username;
     }
 
-    public void writeString(String message){
+    public void writeString(String message) {
         try{
             writer.write(message);
             writer.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void writeObject(ArrayList<Lobby> lobbies) {
+        try {
+            outputStream.writeObject(lobbies);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

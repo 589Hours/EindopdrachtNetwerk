@@ -1,8 +1,9 @@
 package serverClasses;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Lobby {
+public class Lobby implements Serializable {
     private ArrayList<Connection> players = new ArrayList<>();
     //todo game
 
