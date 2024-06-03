@@ -1,14 +1,16 @@
 package serverClasses;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Lobby {
     private ArrayList<Connection> players = new ArrayList<>();
+    private HashMap<String, Double> progressMap = new HashMap<>();
     //todo game
 
 
     public Lobby(){
-        new Thread(); //thread for the lobby itself
+        new Thread();
     }
 
     public boolean addPlayer(Connection connection){
@@ -28,7 +30,12 @@ public class Lobby {
         return true;
     }
 
-    private void updateProgress(){
+    public HashMap<String, Double> getProgressMap() {
+        return progressMap;
+    }
 
+    public void updateProgress(String username, double progress) {
+        progressMap.put(username, progress);
+        Server.broadcastProgress();
     }
 }

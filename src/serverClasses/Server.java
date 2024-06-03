@@ -4,13 +4,16 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Map;
 
 
 public class Server {
     private static ArrayList<Connection> connections = new ArrayList<>();
+    private static Lobby lobby;
 
     public static void main(String[] args) throws IOException {
         System.out.println("server");
+        lobby = new Lobby();
         ServerSocket serverSocket = new ServerSocket(1234);
         while (true) {
             Socket socket = serverSocket.accept();
@@ -23,15 +26,13 @@ public class Server {
     public static void disconnect(Connection connection) {
         System.out.println("Client " + connection.getUsername() + " disconnected");
         connections.remove(connection);
+        lobby.removePlayer(connection);
     }
 
-    public static void WriteToAllExcept(String msg, String nickName) {
-        for (Connection connection : connections)
-        {
-            if(nickName.equals(connection.getUsername())) {
-                continue;
-            }
-                connection.writeString(msg);
+    public static void broadcastProgress() {
+        Map<String, Double> progressMap = lobby.getProgressMap();
+        for (Connection connection : connections) {
+            connection.writeProgress(progressMap);
         }
     }
 }
@@ -57,25 +58,24 @@ class Connection {
     private void receiveData() {
         try {
             while (socket.isConnected()) {
-
                 String line = reader.readLine();
-                if(line == null)
+                if (line == null)
                     break;
                 System.out.println("Server: got " + line);
 
-                if(username == null) {
-                    if(line.equals(""))
+                if (username == null) {
+                    if (line.equals(""))
                         writer.write("Je moet wel een username invullen\n");
                     else {
                         username = line;
                         writer.write("Je bent nu " + line + "\n");
-                        Server.WriteToAllExcept(line + " is net verbonden\n", username);
+                        Server.broadcastProgress();
                     }
                 }
                 writer.flush();
             }
-        }catch(Exception e) {
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         Server.disconnect(this);
     }
@@ -84,16 +84,17 @@ class Connection {
         return this.username;
     }
 
-    public void writeString(String message){
-        try{
-            writer.write(message);
+    public void writeProgress(Map<String, Double> progressMap) {
+        try {
+            StringBuilder sb = new StringBuilder("PROGRESS_LIST");
+            for (Map.Entry<String, Double> entry : progressMap.entrySet()) {
+                sb.append(" ").append(entry.getKey()).append(":").append(entry.getValue());
+            }
+            sb.append("\n");
+            writer.write(sb.toString());
             writer.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void writeDouble (Double message) {
-
     }
 }

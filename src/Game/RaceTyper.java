@@ -14,6 +14,10 @@ import javafx.scene.text.TextFlow;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 
 public class RaceTyper extends Application {
@@ -21,10 +25,15 @@ public class RaceTyper extends Application {
     private ArrayList<String> texts;
     private TextFlow textFlow;
     private TextField inputField;
-    private Label countdownLabel, wpmLabel;
+    private Label countdownLabel, wpmLabel, progressLabel;
     private int countdown;
     private long startTime, endTime;
     private boolean textDone = false;
+    private BufferedWriter writer;
+
+    public RaceTyper(BufferedWriter writer) {
+        this.writer = writer;
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -49,6 +58,9 @@ public class RaceTyper extends Application {
 
         wpmLabel = new Label("");
         wpmLabel.setFont(new Font(24));
+
+        progressLabel = new Label("Progress: 0%");
+        progressLabel.setFont(new Font(24));
 
         VBox vbox = new VBox(10, countdownLabel, textFlow, inputField, wpmLabel);
         vbox.setPadding(new Insets(20));
@@ -121,8 +133,13 @@ public class RaceTyper extends Application {
             int wordCount = typedText.split("\\s+").length;
             double wpm = wordCount / timeTaken;
             wpmLabel.setText("WPM: " + (int) wpm);
+
+            double progress = ((double) len / targetText.length()) * 100;
+            progressLabel.setText("Progress: " + String.format("%.2f", progress) + "%");
+            sendProgressToServer((int) wpm, progress);
         } else {
             wpmLabel.setText("WPM: 0");
+            progressLabel.setText("Progress: 0%");
         }
 
         if (typedText.equals(targetText)) {
@@ -131,6 +148,7 @@ public class RaceTyper extends Application {
             calculateWPM();
         }
     }
+
     private String getTextFlowText() {
         StringBuilder sb = new StringBuilder();
         for (javafx.scene.Node node : textFlow.getChildren()) {
@@ -147,6 +165,15 @@ public class RaceTyper extends Application {
             double wpm = wordCount / minutes;
             wpmLabel.setText("WPM: " + (int) wpm);
             textDone = true;
+        }
+    }
+
+    private void sendProgressToServer(int wpm, double progress) {
+        try {
+            writer.write("PROGRESS " + wpm + " " + progress + "\n");
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

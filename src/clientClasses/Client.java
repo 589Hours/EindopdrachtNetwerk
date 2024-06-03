@@ -1,5 +1,6 @@
 package clientClasses;
 
+import Game.RaceTyper;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -12,6 +13,8 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Client extends Application {
@@ -31,10 +34,9 @@ public class Client extends Application {
         topBar.getChildren().add(userName);
 
         Button playButton = new Button("Play");
-        playButton.setOnAction(e ->{
+        playButton.setOnAction(e -> {
             new Thread(this::handleConnection).start();
         });
-
 
         mainPane.setCenter(playButton);
         mainPane.setTop(topBar);
@@ -51,20 +53,43 @@ public class Client extends Application {
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             System.out.println("Reading data from socket...");
 
-            //send username before handling connection
             this.writer.write(userName.getText() + "\n");
             System.out.println(userName.getText());
             this.writer.flush();
 
+            Platform.runLater(() -> startRaceTyper(writer));
+
             while (socket.isConnected()) {
                 String line = reader.readLine();
                 System.out.println(line);
-                Platform.runLater(() ->
-                {
-                    //todo do stuff with received data
+                Platform.runLater(() -> {
+                    if (line.startsWith("PROGRESS_LIST")) {
+                        updateProgressList(line);
+                    } else if (line.startsWith("PROGRESS")) {
+                    } else {
+                    }
                 });
             }
-        } catch (IOException e){
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateProgressList(String message) {
+        String[] parts = message.split(" ");
+        Map<String, Double> progressMap = new HashMap<>();
+        for (int i = 1; i < parts.length; i++) {
+            String[] userProgress = parts[i].split(":");
+            if (userProgress.length == 2) {
+                progressMap.put(userProgress[0], Double.parseDouble(userProgress[1]));
+            }
+        }
+    }
+
+    private void startRaceTyper(BufferedWriter writer) {
+        try {
+            new RaceTyper(writer).start(new Stage());
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
