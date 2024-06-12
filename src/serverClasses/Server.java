@@ -16,6 +16,7 @@ public class Server {
     public static void main(String[] args) throws IOException {
         System.out.println("server");
         ServerSocket serverSocket = new ServerSocket(1234);
+        createTestLobbies();
         usernames.add("test");
         while (true) {
             Socket socket = serverSocket.accept();
@@ -23,6 +24,12 @@ public class Server {
             System.out.println("found connection!");
             connections.add(connection);
         }
+    }
+
+    private static void createTestLobbies() {
+        lobbies.add(new Lobby("test lobby 1"));
+        lobbies.add(new Lobby("test lobby 2"));
+        lobbies.add(new Lobby("test lobby 3"));
     }
 
     public static void disconnect(Connection connection) {
@@ -42,6 +49,7 @@ public class Server {
 
     public static void sendLobbies(Connection connection) {
         //TODO send lobbies through objectwriter
+        System.out.println("sendLobbies call in server");
         connection.writeObject(lobbies);
     }
 }
@@ -116,6 +124,7 @@ class Connection {
 
     public void writeObject(ArrayList<Lobby> lobbies) {
         try {
+            System.out.println("write object call");
             outputStream.writeObject(lobbies);
         } catch (Exception e) {
             e.printStackTrace();

@@ -2,6 +2,8 @@ package clientClasses;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -85,14 +87,17 @@ public class Client extends Application {
                     writer.write("send lobbies\n");
                     writer.flush();
 
-                    //todo read lobbies
                     lobbies = (ArrayList<Lobby>) inputStream.readObject();
+                    System.out.println(lobbies);
 
                     Platform.runLater(() ->
                     {
                         BorderPane newPane = new BorderPane();
-                        ListView listView = new ListView();
+                        ListView<String> listView = new ListView();
                         primaryStage.getScene().setRoot(newPane);
+                        ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
+                        listView.setItems(observableList);
+                        newPane.setTop(listView);
                     });
                 }
 
