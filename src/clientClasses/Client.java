@@ -31,6 +31,7 @@ public class Client extends Application {
     private BorderPane mainPane;
 
     private ArrayList<Lobby> lobbies;
+    private Boolean ready = false;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -59,7 +60,7 @@ public class Client extends Application {
     }
     public void writeString(String message){
         try {
-            writer.write(message);
+            writer.write(message + "\n");
             writer.flush();
             System.out.println("Client send: " + message);
         } catch (IOException e) {
@@ -78,13 +79,12 @@ public class Client extends Application {
             System.out.println("Reading data from socket...");
 
             //send username before handling connection
-            this.writer.write(userNameTextField.getText() + "\n");
+            writeString(userNameTextField.getText());
             System.out.println(userNameTextField.getText());
-            this.writer.flush();
 
             while (socket.isConnected()) {
                 String line = reader.readLine();
-                System.out.println(line);
+                System.out.println("client: got " + line);
 
                 if (line.equals("Deze username bestaat al")){
                     userNameTextField.clear();
@@ -96,8 +96,7 @@ public class Client extends Application {
                         alert.showAndWait();
                     });
                 } else if (line.equals("Welkom!")){
-                    writer.write("send lobbies\n");
-                    writer.flush();
+                    writeString("send lobbies");
 
                     lobbies = (ArrayList<Lobby>) inputStream.readObject();
                     System.out.println(lobbies);
@@ -106,20 +105,47 @@ public class Client extends Application {
                     {
                         BorderPane newPane = new BorderPane();
                         ListView<Lobby> listView = new ListView();
-                        primaryStage.getScene().setRoot(newPane);
                         ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
                         listView.setItems(observableList);
+
                         listView.setOnMouseClicked(event -> {
                             Lobby selectedLobby = listView.getSelectionModel().getSelectedItem();
 //                            System.out.println("clicked on " + selectedLobby);
 
-                            String connectArgument = "connectTo:" + selectedLobby.getLobbyName() + "\n";
+                            String connectArgument = "connectTo:" + selectedLobby.getLobbyName();
                             writeString(connectArgument);
                         });
+
                         newPane.setTop(listView);
+                        primaryStage.getScene().setRoot(newPane);
+                    });
+
+                } else if (line.equals("full")){
+                    //todo display server is full to user
+
+                } else if (line.equals("accepted")){
+                    Platform.runLater(() ->{
+                        BorderPane waitpane = new BorderPane();
+                        Label waitingText = new Label();
+                        waitingText.setText("waiting for other players");
+                        Button readyButton = new Button();
+
+                        waitpane.setTop(waitingText);
+                        waitpane.setCenter(readyButton);
+                        primaryStage.getScene().setRoot(waitpane);
+
+                        readyButton.setOnAction(event -> {
+                            ready = !ready;
+                            if (ready) {
+                                writeString("ready");
+                                System.out.println("ready");
+                            } else {
+                                writeString("not ready");
+                                System.out.println("not ready");
+                            }
+                        });
                     });
                 }
-
             }
         } catch (IOException e){
             e.printStackTrace();

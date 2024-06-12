@@ -90,39 +90,34 @@ class Connection {
 
                 if(username == null) {
                     if (line.equals("")) {
-                        writer.write("Je moet wel een username invullen\n");
+                        writeString("Je moet wel een username invullen");
                     }
                     else if (!Server.usernames.contains(line)) {
                         username = line;
                         Server.usernames.add(username);
-                        writer.write("Welkom!\n");
+                        writeString("Welkom!");
                     } else {
-                        writer.write("Deze username bestaat al\n");
+                        writeString("Deze username bestaat al");
                     }
                 } else {
                     if (line.equals("send lobbies")){
                         Server.sendLobbies(this);
                     }
 
-                    System.out.println("before connecting");
                     if (line.contains("connectTo")){
-
-                        System.out.println("entered connecting");
-
                         String[] info = line.split(":");
                         String lobbyName = info[1];
+
                         System.out.println(lobbyName);
+
                         Lobby lobby = Server.getLobbyToConnectTo(lobbyName);
                         if (lobby == null){
                             //todo error handling
                         } else {
                             int freeSpots = lobby.getAvailableSpots();
-                            System.out.println(lobby);
-                            System.out.println(freeSpots);
                             if(freeSpots > 0) {
                                 //connecting player to lobby
                                 lobby.addPlayer(this);
-                                System.out.println(lobby.getAvailableSpots());
                                 //todo notify all/ update lobbies
                             } else {
                                 //todo error handling
@@ -131,7 +126,6 @@ class Connection {
                         }
                     }
                 }
-                writer.flush();
             }
         }catch(Exception e) {
 
@@ -145,8 +139,9 @@ class Connection {
 
     public void writeString(String message) {
         try{
-            writer.write(message);
+            writer.write(message + "\n");
             writer.flush();
+            System.out.println("Server: send " + message);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -154,7 +149,6 @@ class Connection {
 
     public void writeObject(ArrayList<Lobby> lobbies) {
         try {
-            System.out.println("write object call");
             outputStream.writeObject(lobbies);
         } catch (Exception e) {
             e.printStackTrace();
