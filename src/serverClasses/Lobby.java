@@ -7,6 +7,7 @@ import java.util.HashMap;
 public class Lobby implements Serializable, Runnable {
     private String lobbyName;
     private boolean started;
+    private final int maxPlayers = 5;
     private ArrayList<Connection> players = new ArrayList<>();
     private HashMap<Connection, String> playerProgress = new HashMap<>();
     //todo game
@@ -39,7 +40,10 @@ public class Lobby implements Serializable, Runnable {
     }
 
     public boolean addPlayer(Connection connection){
-        if (players.size() >= 5){
+        if (players.size() >= maxPlayers){
+            return false;
+        }
+        if (players.contains(connection)){
             return false;
         }
 
@@ -62,9 +66,17 @@ public class Lobby implements Serializable, Runnable {
 
     }
 
+    public String getLobbyName() {
+        return lobbyName;
+    }
+
+    public int getAvailableSpots(){
+        return maxPlayers - players.size();
+    }
+
     @Override
     public String toString() {
-        return "lobbyName = " + lobbyName + "\n" +
-                "players=" + players;
+        return lobbyName + "\n" +
+                "players in lobby " + players;
     }
 }

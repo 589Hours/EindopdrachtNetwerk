@@ -6,6 +6,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.PickResult;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -52,7 +53,18 @@ public class Client extends Application {
         Scene scene = new Scene(this.mainPane);
         primaryStage.setOnCloseRequest(e -> System.exit(0));
         primaryStage.setScene(scene);
+        primaryStage.setWidth(750);
+        primaryStage.setHeight(500);
         primaryStage.show();
+    }
+    public void writeString(String message){
+        try {
+            writer.write(message);
+            writer.flush();
+            System.out.println("Client send: " + message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void handleConnection() {
@@ -97,6 +109,13 @@ public class Client extends Application {
                         primaryStage.getScene().setRoot(newPane);
                         ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
                         listView.setItems(observableList);
+                        listView.setOnMouseClicked(event -> {
+                            Lobby selectedLobby = listView.getSelectionModel().getSelectedItem();
+//                            System.out.println("clicked on " + selectedLobby);
+
+                            String connectArgument = "connectTo:" + selectedLobby.getLobbyName() + "\n";
+                            writeString(connectArgument);
+                        });
                         newPane.setTop(listView);
                     });
                 }

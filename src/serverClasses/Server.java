@@ -1,7 +1,5 @@
 package serverClasses;
 
-import javafx.scene.control.Alert;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -52,6 +50,10 @@ public class Server {
         System.out.println("sendLobbies call in server");
         connection.writeObject(lobbies);
     }
+
+    public static Lobby getLobbyToConnectTo(String lobbyName) {
+        return lobbies.stream().filter(lobby -> lobby.getLobbyName().equals(lobbyName)).findAny().get();
+    }
 }
 
 class Connection {
@@ -98,8 +100,36 @@ class Connection {
                         writer.write("Deze username bestaat al\n");
                     }
                 } else {
-                    if (line.equals("send lobbies"));
-                    Server.sendLobbies(this);
+                    if (line.equals("send lobbies")){
+                        Server.sendLobbies(this);
+                    }
+
+                    System.out.println("before connecting");
+                    if (line.contains("connectTo")){
+
+                        System.out.println("entered connecting");
+
+                        String[] info = line.split(":");
+                        String lobbyName = info[1];
+                        System.out.println(lobbyName);
+                        Lobby lobby = Server.getLobbyToConnectTo(lobbyName);
+                        if (lobby == null){
+                            //todo error handling
+                        } else {
+                            int freeSpots = lobby.getAvailableSpots();
+                            System.out.println(lobby);
+                            System.out.println(freeSpots);
+                            if(freeSpots > 0) {
+                                //connecting player to lobby
+                                lobby.addPlayer(this);
+                                System.out.println(lobby.getAvailableSpots());
+                                //todo notify all/ update lobbies
+                            } else {
+                                //todo error handling
+                            }
+
+                        }
+                    }
                 }
                 writer.flush();
             }
