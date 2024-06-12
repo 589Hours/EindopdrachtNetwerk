@@ -93,7 +93,7 @@ public class Client extends Application {
                     Platform.runLater(() ->
                     {
                         BorderPane newPane = new BorderPane();
-                        ListView<String> listView = new ListView();
+                        ListView<Lobby> listView = new ListView();
                         primaryStage.getScene().setRoot(newPane);
                         ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
                         listView.setItems(observableList);
