@@ -1,12 +1,12 @@
 package clientClasses;
 
+import Game.RaceTyper;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.PickResult;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -30,8 +30,12 @@ public class Client extends Application {
     private Stage primaryStage;
     private BorderPane mainPane;
 
+    private RaceTyper raceTyper;
+
     private ArrayList<Lobby> lobbies;
     private Boolean ready = false;
+    
+    private Label countDownLabel;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -90,7 +94,6 @@ public class Client extends Application {
                     userNameTextField.clear();
                     Platform.runLater(() ->
                     {
-                        //todo do stuff with received data
                         Alert alert = new Alert(Alert.AlertType.INFORMATION);
                         alert.setContentText("Deze username bestaat al");
                         alert.showAndWait();
@@ -126,11 +129,11 @@ public class Client extends Application {
                 } else if (line.equals("accepted")){
                     Platform.runLater(() ->{
                         BorderPane waitpane = new BorderPane();
-                        Label waitingText = new Label();
-                        waitingText.setText("waiting for other players");
+                        countDownLabel = new Label();
+                        countDownLabel.setText("Waiting for players to start countdown");
                         Button readyButton = new Button();
 
-                        waitpane.setTop(waitingText);
+                        waitpane.setTop(countDownLabel);
                         waitpane.setCenter(readyButton);
                         primaryStage.getScene().setRoot(waitpane);
 
@@ -144,6 +147,13 @@ public class Client extends Application {
                                 System.out.println("not ready");
                             }
                         });
+                    });
+                } else if (line.equals("start game")){
+                    raceTyper = new RaceTyper();
+                    raceTyper.start(new Stage());
+                } else if(line.matches("\\d")){
+                    Platform.runLater(() -> {
+                        countDownLabel.setText("Starting game in " + line + " seconds");
                     });
                 }
             }

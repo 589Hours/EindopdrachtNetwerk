@@ -46,8 +46,6 @@ public class Server {
     }
 
     public static void sendLobbies(Connection connection) {
-        //TODO send lobbies through objectwriter
-        System.out.println("sendLobbies call in server");
         connection.writeObject(lobbies);
     }
 
@@ -56,7 +54,7 @@ public class Server {
     }
 }
 
-class Connection {
+class Connection implements Serializable {
     private final Socket socket;
     private final BufferedReader reader;
     private final BufferedWriter writer;
@@ -143,7 +141,7 @@ class Connection {
             writer.flush();
             System.out.println("Server: send " + message);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 

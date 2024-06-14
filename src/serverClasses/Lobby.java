@@ -2,37 +2,45 @@ package serverClasses;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class Lobby implements Serializable, Runnable {
     private String lobbyName;
-    private boolean started;
     private final int maxPlayers = 5;
-    private ArrayList<Connection> players = new ArrayList<>();
+    private List<Connection> players = Collections.synchronizedList(new ArrayList<>());
     private HashMap<Connection, String> playerProgress = new HashMap<>();
-    //todo game
+
 
 
     public Lobby(String name){
         this.lobbyName = name;
-        new Thread(this); //thread for the lobby itself
+        new Thread(this).start(); //thread for the lobby itself
     }
 
     @Override
     public void run() {
-        while (true){
-            if (!playersReady()){
-                continue;
+        int countdown = 30;
+        boolean started = false;
+        while (true) {
+            if (!players.isEmpty() && countdown > 0) {
+                countdown--;
+                try {
+                    String countdownText = String.valueOf(countdown);
+                    players.forEach(player -> player.writeString(countdownText));
+                    Thread.sleep(750);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            if (!started){
+            if (!started) {
                 for (Connection player : players) {
-                    player.writeString("start countdown");
+                    player.writeString("start game");
                 }
                 started = true;
             }
-
         }
-
     }
 
     private boolean playersReady() {
