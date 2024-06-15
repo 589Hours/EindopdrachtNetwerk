@@ -14,26 +14,36 @@ import javafx.scene.text.TextFlow;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class RaceTyper extends Application {
-
     private ArrayList<String> texts;
     private TextFlow textFlow;
     private TextField inputField;
-    private Label countdownLabel, wpmLabel;
+    private Label countdownLabel, wpmLabel, leaderboardLabel;
     private int countdown;
     private long startTime, endTime;
     private boolean textDone = false;
+    private BufferedWriter writer;
+
+    public RaceTyper(BufferedWriter writer) {
+        this.writer = writer;
+    }
 
     @Override
     public void start(Stage primaryStage) {
+        primaryStage.setScene(new Scene(createContent(), 800, 400));
+        primaryStage.show();
+        startCountdown();
+    }
+
+    public VBox createContent() {
         texts = new ArrayList<>();
         texts.add("The quick brown fox jumps over the lazy dog.");
         texts.add("Hello, world! Welcome to the TypeRacer game.");
         texts.add("Java programming is fun and interesting.");
-
-        primaryStage.setTitle("TypeRacer Game");
 
         countdownLabel = new Label("Countdown: 5");
         countdownLabel.setFont(new Font(24));
@@ -47,24 +57,20 @@ public class RaceTyper extends Application {
         inputField.setEditable(false);
         inputField.setOnKeyReleased(e -> checkInput());
 
-        wpmLabel = new Label("");
+        wpmLabel = new Label("WPM: 0");
         wpmLabel.setFont(new Font(24));
 
-        VBox vbox = new VBox(10, countdownLabel, textFlow, inputField, wpmLabel);
+        leaderboardLabel = new Label("Leaderboard");
+        leaderboardLabel.setFont(new Font(24));
+
+        VBox vbox = new VBox(10, countdownLabel, textFlow, inputField, wpmLabel, leaderboardLabel);
         vbox.setPadding(new Insets(20));
 
-        BorderPane root = new BorderPane(vbox);
-        Scene scene = new Scene(root, 800, 300);
-        wpmLabel.setText("WPM : 0");
-
-        primaryStage.setScene(scene);
-        primaryStage.show();
-
-        countdown = 5;
-        startCountdown();
+        return vbox;
     }
 
     private void startCountdown() {
+        countdown = 5;
         new Thread(() -> {
             try {
                 while (countdown > 0) {
@@ -72,10 +78,7 @@ public class RaceTyper extends Application {
                     Thread.sleep(1000);
                     countdown--;
                 }
-                Platform.runLater(() -> {
-                    countdownLabel.setText("Go!");
-                    startTyping();
-                });
+                Platform.runLater(this::startTyping);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -92,6 +95,7 @@ public class RaceTyper extends Application {
     }
 
     private void startTyping() {
+        countdownLabel.setText("Go!");
         inputField.setEditable(true);
         inputField.requestFocus();
         startTime = System.currentTimeMillis();
@@ -105,11 +109,7 @@ public class RaceTyper extends Application {
         for (int i = 0; i < targetText.length(); i++) {
             Text t = (Text) textFlow.getChildren().get(i);
             if (i < len) {
-                if (typedText.charAt(i) == targetText.charAt(i)) {
-                    t.setFill(Color.GREEN);
-                } else {
-                    t.setFill(Color.RED);
-                }
+                t.setFill(typedText.charAt(i) == targetText.charAt(i) ? Color.GREEN : Color.RED);
             } else {
                 t.setFill(Color.BLACK);
             }
@@ -119,8 +119,15 @@ public class RaceTyper extends Application {
             long currentTime = System.currentTimeMillis();
             double timeTaken = (currentTime - startTime) / 1000.0 / 60.0;
             int wordCount = typedText.split("\\s+").length;
-            double wpm = wordCount / timeTaken;
-            wpmLabel.setText("WPM: " + (int) wpm);
+            int wpm = (int) (wordCount / timeTaken);
+            wpmLabel.setText("WPM: " + wpm);
+
+            try {
+                writer.write("wpm:" + wpm + "\n");
+                writer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             wpmLabel.setText("WPM: 0");
         }
@@ -131,6 +138,7 @@ public class RaceTyper extends Application {
             calculateWPM();
         }
     }
+
     private String getTextFlowText() {
         StringBuilder sb = new StringBuilder();
         for (javafx.scene.Node node : textFlow.getChildren()) {
@@ -143,11 +151,20 @@ public class RaceTyper extends Application {
         if (!textDone) {
             long timeTaken = endTime - startTime;
             int wordCount = getTextFlowText().split("\\s+").length;
-            double minutes = timeTaken / 1000.0 / 60.0;
-            double wpm = wordCount / minutes;
-            wpmLabel.setText("WPM: " + (int) wpm);
+            int wpm = (int) (wordCount / (timeTaken / 1000.0 / 60.0));
+            wpmLabel.setText("WPM: " + wpm);
             textDone = true;
+            try {
+                writer.write("finished:" + wpm + "\n");
+                writer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    public void updateLeaderboard(String leaderboard) {
+        Platform.runLater(() -> leaderboardLabel.setText("Leaderboard\n" + leaderboard));
     }
 
     public static void main(String[] args) {

@@ -16,7 +16,6 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-
 public class Client extends Application {
     private TextField userNameTextField;
     private BufferedReader reader;
@@ -52,6 +51,7 @@ public class Client extends Application {
         primaryStage.setHeight(500);
         primaryStage.show();
     }
+
     private void writeString(String message) {
         try {
             writer.write(message + "\n");
@@ -63,8 +63,7 @@ public class Client extends Application {
     }
 
     private void handleConnection() {
-        try {
-            Socket socket = new Socket("localhost", 1234);
+        try (Socket socket = new Socket("localhost", 1234)) {
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.outputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -72,7 +71,6 @@ public class Client extends Application {
 
             System.out.println("Reading data from socket...");
 
-            //send username before handling connection
             writeString(userNameTextField.getText());
             System.out.println(userNameTextField.getText());
 
@@ -139,20 +137,33 @@ public class Client extends Application {
                         });
                         break;
                     case "start game":
-                        raceTyper = new RaceTyper();
-                        raceTyper.start(new Stage());
+                        Platform.runLater(() -> startGame(primaryStage));
                         break;
                     default:
-                        if (line.matches("\\d")) {
+                        if (line.matches("\\d+")) {
                             Platform.runLater(() -> countDownLabel.setText("Starting game in " + line + " seconds"));
+                        } else if (line.startsWith("leaderboard:")) {
+                            String leaderboard = line.substring(line.indexOf(":") + 1);
+                            if (raceTyper != null) {
+                                raceTyper.updateLeaderboard(leaderboard);
+                            }
                         }
                         break;
                 }
             }
-        } catch (IOException e){
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
         }
+    }
+
+    private void startGame(Stage primaryStage) {
+        raceTyper = new RaceTyper(writer);
+        Scene gameScene = new Scene(raceTyper.createContent(), 800, 400);
+        primaryStage.setScene(gameScene);
+        raceTyper.start(primaryStage);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }

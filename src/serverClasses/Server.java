@@ -35,13 +35,11 @@ public class Server {
         connections.remove(connection);
     }
 
-    public static void WriteToAllExcept(String msg, String nickName) {
-        for (Connection connection : connections)
-        {
-            if(nickName.equals(connection.getUsername())) {
-                continue;
-            }
+    public static void writeToAllExcept(String msg, String nickName) {
+        for (Connection connection : connections) {
+            if (!nickName.equals(connection.getUsername())) {
                 connection.writeString(msg);
+            }
         }
     }
 
@@ -50,7 +48,17 @@ public class Server {
     }
 
     public static Lobby getLobbyToConnectTo(String lobbyName) {
-        return lobbies.stream().filter(lobby -> lobby.getLobbyName().equals(lobbyName)).findAny().get();
+        return lobbies.stream().filter(lobby -> lobby.getLobbyName().equals(lobbyName)).findFirst().orElse(null);
+    }
+
+    public static void updatePlayerProgress(String username, int wpm) {
+        Connection connection = connections.stream().filter(conn -> conn.getUsername().equals(username)).findFirst().orElse(null);
+        if (connection != null) {
+            Lobby lobby = lobbies.stream().filter(l -> l.getPlayers().contains(connection)).findFirst().orElse(null);
+            if (lobby != null) {
+                lobby.updatePlayerProgress(connection, wpm);
+            }
+        }
     }
 }
 
@@ -69,7 +77,6 @@ class Connection implements Serializable {
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.inputStream = new ObjectInputStream(socket.getInputStream());
             this.outputStream = new ObjectOutputStream(socket.getOutputStream());
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -95,6 +102,7 @@ class Connection implements Serializable {
         }
         Server.disconnect(this);
     }
+
     private void handleNewUser(String line) throws IOException {
         if (line.isEmpty()) {
             writeString("Je moet wel een username invullen");
@@ -121,6 +129,12 @@ class Connection implements Serializable {
                     writeString("full");
                 }
             }
+        } else if (line.startsWith("wpm:")) {
+            int wpm = Integer.parseInt(line.split(":")[1]);
+            Server.updatePlayerProgress(username, wpm);
+        } else if (line.startsWith("finished:")) {
+            int wpm = Integer.parseInt(line.split(":")[1]);
+            Server.updatePlayerProgress(username, wpm);
         }
     }
 
