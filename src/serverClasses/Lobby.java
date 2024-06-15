@@ -12,6 +12,7 @@ public class Lobby implements Serializable, Runnable {
     private HashMap<Connection, Integer> playerProgress = new HashMap<>();
     private HashMap<Connection, Boolean> playerReadyStatus = new HashMap<>();
     private boolean countdownStarted = false;
+    private Thread countdownThread;
 
     public Lobby(String name) {
         this.lobbyName = name;
@@ -21,7 +22,10 @@ public class Lobby implements Serializable, Runnable {
     @Override
     public void run() {
         while (true) {
-            if (!countdownStarted && players.size() > 0) {
+            if (players.isEmpty() && countdownStarted) {
+                resetCountdown();
+            }
+            else if (!countdownStarted && players.size() > 0) {
                 startCountdown();
                 countdownStarted = true;
             }
@@ -34,12 +38,16 @@ public class Lobby implements Serializable, Runnable {
     }
 
     private void startCountdown() {
-        new Thread(() -> {
+        countdownThread = new Thread(() -> {
             int countdown = 30;
             while (countdown > 0) {
                 try {
                     String countdownText = String.valueOf(countdown);
-                    players.forEach(player -> player.writeString(countdownText));
+                    synchronized (players) {
+                        for (Connection player : players) {
+                            player.writeString(countdownText);
+                        }
+                    }
                     Thread.sleep(1000);
                     countdown--;
 
@@ -51,7 +59,15 @@ public class Lobby implements Serializable, Runnable {
                 }
             }
             players.forEach(player -> player.writeString("start game"));
-        }).start();
+            countdownStarted = false; // Countdown finished
+        });
+        countdownThread.start();
+        countdownStarted = true;
+    }
+
+    private void resetCountdown() {
+        countdownThread.interrupt();
+        countdownStarted = false;
     }
 
     private boolean allPlayersReady() {
