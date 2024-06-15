@@ -16,6 +16,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
+
 public class Client extends Application {
     private TextField userNameTextField;
     private BufferedReader reader;
@@ -28,6 +29,7 @@ public class Client extends Application {
     private ArrayList<Lobby> lobbies;
     private Boolean ready = false;
     private Label countDownLabel;
+    private Label playerCountLabel;
 
     @Override
     public void start(Stage primaryStage) {
@@ -115,21 +117,22 @@ public class Client extends Application {
                         Platform.runLater(() -> {
                             BorderPane waitPane = new BorderPane();
                             countDownLabel = new Label("Waiting for players to start countdown");
+                            playerCountLabel = new Label("Players in lobby: 1");
                             Button readyButton = new Button("Not ready");
                             readyButton.setStyle("-fx-background-color: Red");
 
-                            waitPane.setTop(countDownLabel);
-                            waitPane.setCenter(readyButton);
+                            VBox vbox = new VBox(10, countDownLabel, playerCountLabel, readyButton);
+                            waitPane.setCenter(vbox);
                             primaryStage.getScene().setRoot(waitPane);
 
                             readyButton.setOnAction(event -> {
                                 ready = !ready;
                                 if (ready) {
-                                    writeString("ready");
+                                    writeString("ready:true");
                                     readyButton.setStyle("-fx-background-color: MediumSeaGreen");
                                     readyButton.setText("Ready");
                                 } else {
-                                    writeString("not ready");
+                                    writeString("ready:false");
                                     readyButton.setStyle("-fx-background-color: Red");
                                     readyButton.setText("Not ready");
                                 }
@@ -147,6 +150,9 @@ public class Client extends Application {
                             if (raceTyper != null) {
                                 raceTyper.updateLeaderboard(leaderboard);
                             }
+                        } else if (line.startsWith("playerCount:")) {
+                            String playerCount = line.split(":")[1];
+                            Platform.runLater(() -> playerCountLabel.setText("Players in lobby: " + playerCount));
                         }
                         break;
                 }

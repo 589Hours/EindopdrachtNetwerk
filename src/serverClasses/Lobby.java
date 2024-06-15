@@ -10,30 +10,20 @@ public class Lobby implements Serializable, Runnable {
     private final int maxPlayers = 5;
     private List<Connection> players = Collections.synchronizedList(new ArrayList<>());
     private HashMap<Connection, Integer> playerProgress = new HashMap<>();
+    private HashMap<Connection, Boolean> playerReadyStatus = new HashMap<>();
     private boolean countdownStarted = false;
 
     public Lobby(String name) {
         this.lobbyName = name;
-        new Thread(this).start();
+        new Thread(this).start(); // Thread for the lobby itself
     }
 
     @Override
     public void run() {
         while (true) {
-            if (countdownStarted && players.size() > 0) {
-                int countdown = 10;
-                while (countdown > 0) {
-                    try {
-                        String countdownText = String.valueOf(countdown);
-                        players.forEach(player -> player.writeString(countdownText));
-                        Thread.sleep(1000);
-                        countdown--;
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                players.forEach(player -> player.writeString("start game"));
-                countdownStarted = false;
+            if (!countdownStarted && players.size() > 0) {
+                startCountdown();
+                countdownStarted = true;
             }
             try {
                 Thread.sleep(1000);
@@ -41,6 +31,31 @@ public class Lobby implements Serializable, Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void startCountdown() {
+        new Thread(() -> {
+            int countdown = 30;
+            while (countdown > 0) {
+                try {
+                    String countdownText = String.valueOf(countdown);
+                    players.forEach(player -> player.writeString(countdownText));
+                    Thread.sleep(1000);
+                    countdown--;
+
+                    if (allPlayersReady()) {
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            players.forEach(player -> player.writeString("start game"));
+        }).start();
+    }
+
+    private boolean allPlayersReady() {
+        return players.size() > 0 && playerReadyStatus.values().stream().allMatch(Boolean::booleanValue);
     }
 
     public void addPlayer(Connection player) {
@@ -53,27 +68,35 @@ public class Lobby implements Serializable, Runnable {
         }
 
         players.add(player);
+        playerReadyStatus.put(player, false);
         player.writeString("accepted");
-        if (!countdownStarted) {
-            countdownStarted = true;
-        }
-        // TODO: Notify all others
-        // TODO: Update lobby in server list
+        updatePlayerCount();
     }
 
-    public boolean removePlayer(Connection connection) {
-        if (players.isEmpty()) {
-            return false;
+    public void removePlayer(Connection connection) {
+        if (!players.isEmpty()) {
+            players.remove(connection);
+            playerReadyStatus.remove(connection);
+            updatePlayerCount();
         }
-        // TODO: Notify all others
-        // TODO: Update lobby in server list
-        players.remove(connection);
-        return true;
     }
 
     public void updatePlayerProgress(Connection player, int wpm) {
         playerProgress.put(player, wpm);
         updateLeaderboard();
+    }
+
+    public void setPlayerReady(Connection player, boolean isReady) {
+        playerReadyStatus.put(player, isReady);
+
+        if (allPlayersReady()) {
+            startGame();
+        }
+    }
+
+    private void updatePlayerCount() {
+        String message = "playerCount:" + players.size();
+        players.forEach(player -> player.writeString(message));
     }
 
     private void updateLeaderboard() {
@@ -84,6 +107,10 @@ public class Lobby implements Serializable, Runnable {
                         .append(": ").append(entry.getValue()).append(" WPM\n"));
         String leaderboardText = "leaderboard:" + leaderboard.toString();
         players.forEach(player -> player.writeString(leaderboardText));
+    }
+
+    public void startGame() {
+        players.forEach(player -> player.writeString("start game"));
     }
 
     public String getLobbyName() {
@@ -100,7 +127,6 @@ public class Lobby implements Serializable, Runnable {
 
     @Override
     public String toString() {
-        return lobbyName + "\n" +
-                "players in lobby " + players;
+        return lobbyName + " (" + players.size() + "/" + maxPlayers + " players)";
     }
 }

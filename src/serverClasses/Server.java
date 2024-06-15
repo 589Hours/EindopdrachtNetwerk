@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-
 public class Server {
     private static ArrayList<Connection> connections = new ArrayList<>();
     public static ArrayList<String> usernames = new ArrayList<>();
@@ -33,6 +32,9 @@ public class Server {
     public static void disconnect(Connection connection) {
         System.out.println("Client " + connection.getUsername() + " disconnected");
         connections.remove(connection);
+        for (Lobby lobby : lobbies) {
+            lobby.removePlayer(connection);
+        }
     }
 
     public static void writeToAllExcept(String msg, String nickName) {
@@ -57,6 +59,16 @@ public class Server {
             Lobby lobby = lobbies.stream().filter(l -> l.getPlayers().contains(connection)).findFirst().orElse(null);
             if (lobby != null) {
                 lobby.updatePlayerProgress(connection, wpm);
+            }
+        }
+    }
+
+    public static void setPlayerReady(String username, boolean isReady) {
+        Connection connection = connections.stream().filter(conn -> conn.getUsername().equals(username)).findFirst().orElse(null);
+        if (connection != null) {
+            Lobby lobby = lobbies.stream().filter(l -> l.getPlayers().contains(connection)).findFirst().orElse(null);
+            if (lobby != null) {
+                lobby.setPlayerReady(connection, isReady);
             }
         }
     }
@@ -135,6 +147,9 @@ class Connection implements Serializable {
         } else if (line.startsWith("finished:")) {
             int wpm = Integer.parseInt(line.split(":")[1]);
             Server.updatePlayerProgress(username, wpm);
+        } else if (line.startsWith("ready:")) {
+            boolean isReady = Boolean.parseBoolean(line.split(":")[1]);
+            Server.setPlayerReady(username, isReady);
         }
     }
 
