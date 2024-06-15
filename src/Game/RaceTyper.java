@@ -4,9 +4,9 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -23,13 +23,14 @@ public class RaceTyper extends Application {
     private TextFlow textFlow;
     private TextField inputField;
     private Label countdownLabel, wpmLabel, leaderboardLabel;
+    private Button backButton;
     private int countdown;
     private long startTime, endTime;
     private boolean textDone = false;
-    private BufferedWriter writer;
+    private BufferedWriter serverWriter;
 
     public RaceTyper(BufferedWriter writer) {
-        this.writer = writer;
+        this.serverWriter = writer;
     }
 
     @Override
@@ -48,6 +49,18 @@ public class RaceTyper extends Application {
         countdownLabel = new Label("Countdown: 5");
         countdownLabel.setFont(new Font(24));
 
+        backButton = new Button("Terug");
+        backButton.setVisible(false);
+
+        backButton.setOnAction(event -> {
+            try {
+                serverWriter.write("terug:\n");
+                serverWriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
         textFlow = new TextFlow();
         textFlow.setStyle("-fx-font-size: 24px;");
         setTextFlow(texts.get(0));
@@ -63,7 +76,7 @@ public class RaceTyper extends Application {
         leaderboardLabel = new Label("Leaderboard");
         leaderboardLabel.setFont(new Font(24));
 
-        VBox vbox = new VBox(10, countdownLabel, textFlow, inputField, wpmLabel, leaderboardLabel);
+        VBox vbox = new VBox(10, countdownLabel, textFlow, inputField, wpmLabel, leaderboardLabel, backButton);
         vbox.setPadding(new Insets(20));
 
         return vbox;
@@ -123,8 +136,8 @@ public class RaceTyper extends Application {
             wpmLabel.setText("WPM: " + wpm);
 
             try {
-                writer.write("wpm:" + wpm + "\n");
-                writer.flush();
+                serverWriter.write("wpm:" + wpm + "\n");
+                serverWriter.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -134,6 +147,7 @@ public class RaceTyper extends Application {
 
         if (typedText.equals(targetText)) {
             endTime = System.currentTimeMillis();
+            backButton.setVisible(true);
             inputField.setEditable(false);
             calculateWPM();
         }
@@ -155,8 +169,8 @@ public class RaceTyper extends Application {
             wpmLabel.setText("WPM: " + wpm);
             textDone = true;
             try {
-                writer.write("finished:" + wpm + "\n");
-                writer.flush();
+                serverWriter.write("finished:" + wpm + "\n");
+                serverWriter.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }

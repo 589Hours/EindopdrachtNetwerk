@@ -1,5 +1,7 @@
 package serverClasses;
 
+import clientClasses.Client;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,6 +17,7 @@ public class Server {
         ServerSocket serverSocket = new ServerSocket(1234);
         createTestLobbies();
         usernames.add("test");
+
         while (true) {
             Socket socket = serverSocket.accept();
             Connection connection = new Connection(socket);
@@ -70,6 +73,12 @@ public class Server {
             if (lobby != null) {
                 lobby.setPlayerReady(connection, isReady);
             }
+        }
+    }
+
+    public static void disconnectFromLobby(Connection connection) {
+        for (Lobby lobby : lobbies) {
+            lobby.removePlayer(connection);
         }
     }
 }
@@ -150,6 +159,10 @@ class Connection implements Serializable {
         } else if (line.startsWith("ready:")) {
             boolean isReady = Boolean.parseBoolean(line.split(":")[1]);
             Server.setPlayerReady(username, isReady);
+        } else if (line.contains("terug")) {
+            Server.disconnectFromLobby(this);
+            if (line.contains("terug:"))
+            writeString("terug");
         }
     }
 

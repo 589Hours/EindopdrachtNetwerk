@@ -30,6 +30,8 @@ public class Client extends Application {
     private Boolean ready = false;
     private Label countDownLabel;
     private Label playerCountLabel;
+    private BorderPane lobbyPane = new BorderPane();
+    private ListView<Lobby> listView = new ListView<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -95,8 +97,6 @@ public class Client extends Application {
                         System.out.println(lobbies);
 
                         Platform.runLater(() -> {
-                            BorderPane newPane = new BorderPane();
-                            ListView<Lobby> listView = new ListView<>();
                             ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
                             listView.setItems(observableList);
 
@@ -106,8 +106,8 @@ public class Client extends Application {
                                 writeString(connectArgument);
                             });
 
-                            newPane.setTop(listView);
-                            primaryStage.getScene().setRoot(newPane);
+                            lobbyPane.setTop(listView);
+                            primaryStage.getScene().setRoot(lobbyPane);
                         });
                         break;
                     case "full":
@@ -118,10 +118,13 @@ public class Client extends Application {
                             BorderPane waitPane = new BorderPane();
                             countDownLabel = new Label("Waiting for players to start countdown");
                             playerCountLabel = new Label("Players in lobby: 1");
+
                             Button readyButton = new Button("Not ready");
                             readyButton.setStyle("-fx-background-color: Red");
 
-                            VBox vbox = new VBox(10, countDownLabel, playerCountLabel, readyButton);
+                            Button backButton = new Button("Terug");
+
+                            VBox vbox = new VBox(10, countDownLabel, playerCountLabel, readyButton, backButton);
                             waitPane.setCenter(vbox);
                             primaryStage.getScene().setRoot(waitPane);
 
@@ -136,6 +139,11 @@ public class Client extends Application {
                                     readyButton.setStyle("-fx-background-color: Red");
                                     readyButton.setText("Not ready");
                                 }
+                            });
+
+                            backButton.setOnAction(event -> {
+                                returnToChooseLobby();
+                                writeString("terug");
                             });
                         });
                         break;
@@ -155,6 +163,9 @@ public class Client extends Application {
                             Platform.runLater(() -> playerCountLabel.setText("Players in lobby: " + playerCount));
                         }
                         break;
+                    case "terug":
+                        returnToChooseLobby();
+                        break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -167,6 +178,12 @@ public class Client extends Application {
         Scene gameScene = new Scene(raceTyper.createContent(), 800, 400);
         primaryStage.setScene(gameScene);
         raceTyper.start(primaryStage);
+    }
+
+    private void returnToChooseLobby() {
+        Platform.runLater(() -> {
+            primaryStage.getScene().setRoot(lobbyPane);
+        });
     }
 
     public static void main(String[] args) {
