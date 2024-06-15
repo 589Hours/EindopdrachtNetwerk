@@ -80,55 +80,48 @@ class Connection implements Serializable {
     private void receiveData() {
         try {
             while (socket.isConnected()) {
-
                 String line = reader.readLine();
-                if(line == null)
-                    break;
+                if (line == null) break;
                 System.out.println("Server: got " + line);
 
-                if(username == null) {
-                    if (line.equals("")) {
-                        writeString("Je moet wel een username invullen");
-                    }
-                    else if (!Server.usernames.contains(line)) {
-                        username = line;
-                        Server.usernames.add(username);
-                        writeString("Welkom!");
-                    } else {
-                        writeString("Deze username bestaat al");
-                    }
+                if (username == null) {
+                    handleNewUser(line);
                 } else {
-                    if (line.equals("send lobbies")){
-                        Server.sendLobbies(this);
-                    }
-
-                    if (line.contains("connectTo")){
-                        String[] info = line.split(":");
-                        String lobbyName = info[1];
-
-                        System.out.println(lobbyName);
-
-                        Lobby lobby = Server.getLobbyToConnectTo(lobbyName);
-                        if (lobby == null){
-                            //todo error handling
-                        } else {
-                            int freeSpots = lobby.getAvailableSpots();
-                            if(freeSpots > 0) {
-                                //connecting player to lobby
-                                lobby.addPlayer(this);
-                                //todo notify all/ update lobbies
-                            } else {
-                                //todo error handling
-                            }
-
-                        }
-                    }
+                    handleClientRequest(line);
                 }
             }
-        }catch(Exception e) {
-
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         Server.disconnect(this);
+    }
+    private void handleNewUser(String line) throws IOException {
+        if (line.isEmpty()) {
+            writeString("Je moet wel een username invullen");
+        } else if (!Server.usernames.contains(line)) {
+            username = line;
+            Server.usernames.add(username);
+            writeString("Welkom!");
+        } else {
+            writeString("Deze username bestaat al");
+        }
+    }
+
+    private void handleClientRequest(String line) throws IOException {
+        if (line.equals("send lobbies")) {
+            Server.sendLobbies(this);
+        } else if (line.startsWith("connectTo")) {
+            String[] info = line.split(":");
+            String lobbyName = info[1];
+            Lobby lobby = Server.getLobbyToConnectTo(lobbyName);
+            if (lobby != null) {
+                if (lobby.getAvailableSpots() > 0) {
+                    lobby.addPlayer(this);
+                } else {
+                    writeString("full");
+                }
+            }
+        }
     }
 
     public String getUsername() {
@@ -136,10 +129,10 @@ class Connection implements Serializable {
     }
 
     public void writeString(String message) {
-        try{
+        try {
             writer.write(message + "\n");
             writer.flush();
-            System.out.println("Server: send " + message);
+            System.out.println("Server: sent " + message);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -148,12 +141,8 @@ class Connection implements Serializable {
     public void writeObject(ArrayList<Lobby> lobbies) {
         try {
             outputStream.writeObject(lobbies);
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void writeDouble (Double message) {
-
     }
 }

@@ -47,19 +47,19 @@ public class Lobby implements Serializable, Runnable {
         return false;
     }
 
-    public void addPlayer(Connection player){
-        if (players.size() >= maxPlayers){
+    public void addPlayer(Connection player) {
+        if (players.size() >= maxPlayers) {
             player.writeString("full");
             return;
         }
-        if (players.contains(player)){
+        if (players.contains(player)) {
             return;
         }
 
         players.add(player);
         player.writeString("accepted");
-        //todo notify all others
-        //todo update lobby in server list?
+        // TODO: Notify all others
+        // TODO: Update lobby in server list
     }
     public boolean removePlayer(Connection connection){
         if (players.isEmpty()){
