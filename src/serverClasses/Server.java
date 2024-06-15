@@ -160,9 +160,10 @@ class Connection implements Serializable {
             boolean isReady = Boolean.parseBoolean(line.split(":")[1]);
             Server.setPlayerReady(username, isReady);
         } else if (line.contains("terug")) {
-            Server.disconnectFromLobby(this);
             if (line.contains("terug:"))
             writeString("terug");
+        } else if (line.equals("disconnect")) {
+            Server.disconnectFromLobby(this);
         }
     }
 

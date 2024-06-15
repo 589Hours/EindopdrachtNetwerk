@@ -16,7 +16,7 @@ public class Lobby implements Serializable, Runnable {
 
     public Lobby(String name) {
         this.lobbyName = name;
-        new Thread(this).start(); // Thread for the lobby itself
+        new Thread(this).start();
     }
 
     @Override
@@ -25,7 +25,7 @@ public class Lobby implements Serializable, Runnable {
             if (players.isEmpty() && countdownStarted) {
                 resetCountdown();
             }
-            else if (!countdownStarted && players.size() > 0) {
+            else if (!countdownStarted && !players.isEmpty()) {
                 startCountdown();
                 countdownStarted = true;
             }
@@ -38,36 +38,45 @@ public class Lobby implements Serializable, Runnable {
     }
 
     private void startCountdown() {
-        countdownThread = new Thread(() -> {
-            int countdown = 30;
-            while (countdown > 0) {
-                try {
-                    String countdownText = String.valueOf(countdown);
-                    synchronized (players) {
-                        for (Connection player : players) {
-                            player.writeString(countdownText);
-                        }
-                    }
-                    Thread.sleep(1000);
-                    countdown--;
-
-                    if (allPlayersReady()) {
-                        break;
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            players.forEach(player -> player.writeString("start game"));
-            countdownStarted = false; // Countdown finished
-        });
+        countdownThread = new Thread(() -> countdownLogic());
         countdownThread.start();
-        countdownStarted = true;
+    }
+
+    private void countdownLogic() {
+        int countdown = 30;
+        while (countdown > 0) {
+            try {
+                String countdownText = String.valueOf(countdown);
+                synchronized (players) {
+                    for (Connection player : players) {
+                        player.writeString(countdownText);
+                    }
+                }
+                Thread.sleep(1000);
+                countdown--;
+
+                if (allPlayersReady()) {
+                    break;
+                }
+            } catch (InterruptedException e) {
+               e.printStackTrace();
+               break;
+            }
+        }
+        synchronized (players) {
+            for (Connection player : players) {
+                player.writeString("start game");
+            }
+        }
+        countdownStarted = false;
     }
 
     private void resetCountdown() {
-        countdownThread.interrupt();
+        if (countdownThread != null && countdownThread.isAlive()) {
+            countdownThread.interrupt();
+        }
         countdownStarted = false;
+        startCountdown();
     }
 
     private boolean allPlayersReady() {

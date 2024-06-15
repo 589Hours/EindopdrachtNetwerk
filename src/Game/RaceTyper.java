@@ -150,6 +150,12 @@ public class RaceTyper extends Application {
             backButton.setVisible(true);
             inputField.setEditable(false);
             calculateWPM();
+            try {
+                serverWriter.write("disconnect");
+                serverWriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
