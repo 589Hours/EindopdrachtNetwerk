@@ -123,8 +123,9 @@ public class Client extends Application {
                         primaryStage.getScene().setRoot(newPane);
                     });
 
-                } else if (line.equals("full")){
-                    //todo display server is full to user
+                } else if (line.equals("lobby update")){
+                    lobbies = (ArrayList<Lobby>) inputStream.readObject();
+                    System.out.println(lobbies.get(0).getAvailableSpots());
 
                 } else if (line.equals("accepted")){
                     Platform.runLater(() ->{

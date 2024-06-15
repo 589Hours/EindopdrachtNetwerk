@@ -59,7 +59,7 @@ public class Lobby implements Serializable, Runnable {
         players.add(player);
         player.writeString("accepted");
         //todo notify all others
-        //todo update lobby in server list?
+        Server.UpdateAllLobbies(player);
     }
     public boolean removePlayer(Connection connection){
         if (players.isEmpty()){
@@ -86,6 +86,6 @@ public class Lobby implements Serializable, Runnable {
     @Override
     public String toString() {
         return lobbyName + "\n" +
-                "players in lobby " + players;
+                "players in lobby : " + players;
     }
 }

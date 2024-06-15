@@ -52,14 +52,29 @@ public class Server {
     public static Lobby getLobbyToConnectTo(String lobbyName) {
         return lobbies.stream().filter(lobby -> lobby.getLobbyName().equals(lobbyName)).findAny().get();
     }
+
+    public static void UpdateAllLobbies(Connection playerToSkip) {
+        connections.stream().filter(connection -> connection != playerToSkip).forEach(
+                connection -> {
+                    connection.writeString("lobby update");
+                    try {
+                        //wait small amount of time so other clients can prepare
+                        Thread.sleep(250);
+                        connection.writeObject(lobbies);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                });
+    }
 }
 
 class Connection implements Serializable {
-    private final Socket socket;
-    private final BufferedReader reader;
-    private final BufferedWriter writer;
-    private final ObjectInputStream inputStream;
-    private final ObjectOutputStream outputStream;
+    private final transient Socket socket;
+    private final transient BufferedReader reader;
+    private final transient BufferedWriter writer;
+    private final transient ObjectInputStream inputStream;
+    private final transient ObjectOutputStream outputStream;
     private String username = null;
 
     public Connection(Socket socket) {
@@ -156,4 +171,5 @@ class Connection implements Serializable {
     public void writeDouble (Double message) {
 
     }
+
 }
