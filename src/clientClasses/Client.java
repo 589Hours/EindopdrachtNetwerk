@@ -132,6 +132,8 @@ public class Client extends Application {
                         countDownLabel = new Label();
                         countDownLabel.setText("Waiting for players to start countdown");
                         Button readyButton = new Button();
+                        readyButton.setStyle("-fx-background-color: Red");
+                        readyButton.setText("Not ready");
 
                         waitpane.setTop(countDownLabel);
                         waitpane.setCenter(readyButton);
@@ -141,9 +143,13 @@ public class Client extends Application {
                             ready = !ready;
                             if (ready) {
                                 writeString("ready");
+                                readyButton.setStyle("-fx-background-color: MediumSeaGreen");
+                                readyButton.setText("Ready");
                                 System.out.println("ready");
                             } else {
                                 writeString("not ready");
+                                readyButton.setStyle("-fx-background-color: Red");
+                                readyButton.setText("Not ready");
                                 System.out.println("not ready");
                             }
                         });
