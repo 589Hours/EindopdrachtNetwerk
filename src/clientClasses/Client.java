@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import serverClasses.Lobby;
 
@@ -112,8 +113,21 @@ public class Client extends Application {
                             primaryStage.getScene().setRoot(lobbyPane);
                         });
                         break;
+                    case "already started":
+                        Platform.runLater(() -> {
+                        Alert alreadyBegunAlert = new Alert(Alert.AlertType.ERROR);
+                        alreadyBegunAlert.setHeaderText("ERROR 102");
+                        alreadyBegunAlert.setContentText("This lobby has already started");
+                        alreadyBegunAlert.showAndWait();
+                        });
+                        break;
                     case "full":
-                        // TODO: Display server is full to user
+                        Platform.runLater(() -> {
+                            Alert lobbyFullAlert = new Alert(Alert.AlertType.ERROR);
+                            lobbyFullAlert.setHeaderText("ERROR 104");
+                            lobbyFullAlert.setContentText("This lobby is full");
+                            lobbyFullAlert.showAndWait();
+                        });
                         break;
                     case "accepted":
                         Platform.runLater(() -> {

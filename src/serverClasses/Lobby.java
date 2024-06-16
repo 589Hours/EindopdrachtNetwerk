@@ -20,15 +20,11 @@ public class Lobby implements Serializable, Runnable {
             "Why do programmers hate nature? It has too many bugs.",
             "In order to understand recursion, you must first understand recursion."
     };
+    private boolean gameHasStarted;
 
     public Lobby(String name) {
         this.lobbyName = name;
-        players = Collections.synchronizedList(new ArrayList<>());
-        playerProgress = new HashMap<>();
-        playerReadyStatus = new HashMap<>();
-        countdownStarted = false;
-        this.gameText = getRandomText();
-        new Thread(this).start(); // Thread for the lobby itself
+        resetLobby();
     }
 
     private void resetLobby() {
@@ -36,6 +32,7 @@ public class Lobby implements Serializable, Runnable {
         playerProgress = new HashMap<>();
         playerReadyStatus = new HashMap<>();
         countdownStarted = false;
+        gameHasStarted = false;
         this.gameText = getRandomText();
         new Thread(this).start();
     }
@@ -89,6 +86,7 @@ public class Lobby implements Serializable, Runnable {
             }
             String selectedText = getRandomText();
             players.forEach(player -> player.writeString("start game" + selectedText));
+            gameHasStarted = true;
         }).start();
     }
 
@@ -105,6 +103,10 @@ public class Lobby implements Serializable, Runnable {
     public void addPlayer(Connection player) {
         if (players.size() >= maxPlayers) {
             player.writeString("full");
+            return;
+        }
+        if (gameHasStarted){
+            player.writeString("already started");
             return;
         }
         if (players.contains(player)) {
