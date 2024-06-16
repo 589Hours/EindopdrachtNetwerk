@@ -75,11 +75,11 @@ public class Server {
 }
 
 class Connection implements Serializable {
-    private final Socket socket;
-    private final BufferedReader reader;
-    private final BufferedWriter writer;
-    private final ObjectInputStream inputStream;
-    private final ObjectOutputStream outputStream;
+    private final transient Socket socket;
+    private final transient BufferedReader reader;
+    private final transient BufferedWriter writer;
+    private final transient ObjectInputStream inputStream;
+    private final transient ObjectOutputStream outputStream;
     private String username = null;
 
     public Connection(Socket socket) {

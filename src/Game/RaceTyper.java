@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class RaceTyper extends Application {
     private ArrayList<String> texts;
@@ -27,9 +28,12 @@ public class RaceTyper extends Application {
     private long startTime, endTime;
     private boolean textDone = false;
     private BufferedWriter writer;
+    private Random random;
+    private String text;
 
-    public RaceTyper(BufferedWriter writer) {
+    public RaceTyper(BufferedWriter writer, String text) {
         this.writer = writer;
+        this.text = text;
     }
 
     @Override
@@ -41,16 +45,21 @@ public class RaceTyper extends Application {
 
     public VBox createContent() {
         texts = new ArrayList<>();
-        texts.add("The quick brown fox jumps over the lazy dog.");
-        texts.add("Hello, world! Welcome to the TypeRacer game.");
-        texts.add("Java programming is fun and interesting.");
+        texts.add("There are 10 types of people in the world: those who understand binary and those who don’t.");
+        texts.add("Why do Java developers wear glasses? Because they don’t see sharp.");
+        texts.add("Debugging: Being the detective in a crime movie where you are also the murderer.");
+        texts.add("Why do programmers prefer dark mode? Because lights attracts bugs!");
+        texts.add("A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?");
+        texts.add("Programming is like writing a book... except if you miss out a single comma on page 126, the whole thing makes no sense.");
+        texts.add("Why do programmers hate nature? It has too many bugs.");
+        texts.add("In order to understand recursion, you must first understand recursion.");
 
         countdownLabel = new Label("Countdown: 5");
         countdownLabel.setFont(new Font(24));
 
         textFlow = new TextFlow();
         textFlow.setStyle("-fx-font-size: 24px;");
-        setTextFlow(texts.get(0));
+        setTextFlow(text);
 
         inputField = new TextField();
         inputField.setFont(new Font(24));
@@ -163,8 +172,20 @@ public class RaceTyper extends Application {
         }
     }
 
-    public void updateLeaderboard(String leaderboard) {
-        Platform.runLater(() -> leaderboardLabel.setText("Leaderboard\n" + leaderboard));
+    public void updateLeaderboard(String[] playerDataList) {
+        System.out.println("updating leaderboard");
+        Platform.runLater(() -> {
+            StringBuilder leaderboardText = new StringBuilder("Leaderboard\n");
+
+            for (String playerData : playerDataList) {
+                leaderboardText.append(playerData).append("\n");
+                System.out.println(leaderboardText);
+            }
+
+            String textToShow = leaderboardText.toString();
+            System.out.println(textToShow);
+            leaderboardLabel.setText(textToShow);
+        });
     }
 
     public static void main(String[] args) {

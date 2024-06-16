@@ -25,6 +25,7 @@ public class Client extends Application {
     private ObjectOutputStream outputStream;
     private Stage primaryStage;
     private BorderPane mainPane;
+    private BorderPane lobbyPane;
     private RaceTyper raceTyper;
     private ArrayList<Lobby> lobbies;
     private Boolean ready = false;
@@ -95,7 +96,7 @@ public class Client extends Application {
                         System.out.println(lobbies);
 
                         Platform.runLater(() -> {
-                            BorderPane newPane = new BorderPane();
+                            lobbyPane = new BorderPane();
                             ListView<Lobby> listView = new ListView<>();
                             ObservableList<Lobby> observableList = FXCollections.observableArrayList(lobbies);
                             listView.setItems(observableList);
@@ -106,8 +107,8 @@ public class Client extends Application {
                                 writeString(connectArgument);
                             });
 
-                            newPane.setTop(listView);
-                            primaryStage.getScene().setRoot(newPane);
+                            lobbyPane.setTop(listView);
+                            primaryStage.getScene().setRoot(lobbyPane);
                         });
                         break;
                     case "full":
@@ -140,15 +141,18 @@ public class Client extends Application {
                         });
                         break;
                     case "start game":
-                        Platform.runLater(() -> startGame(primaryStage));
+                        String receivedTypeText = reader.readLine();
+//                        String selectedText = line.substring("start game:".length()+1);
+                        Platform.runLater(() -> startGame(primaryStage, receivedTypeText));
                         break;
                     default:
                         if (line.matches("\\d+")) {
                             Platform.runLater(() -> countDownLabel.setText("Starting game in " + line + " seconds"));
-                        } else if (line.startsWith("leaderboard:")) {
-                            String leaderboard = line.substring(line.indexOf(":") + 1);
+                        } else if (line.startsWith("leaderboard;")) {
+                            String[] splitCommandAndText = line.split(";");
+                            String[] playerProgress = splitCommandAndText[1].split(",");
                             if (raceTyper != null) {
-                                raceTyper.updateLeaderboard(leaderboard);
+                                raceTyper.updateLeaderboard(playerProgress);
                             }
                         } else if (line.startsWith("playerCount:")) {
                             String playerCount = line.split(":")[1];
@@ -162,8 +166,8 @@ public class Client extends Application {
         }
     }
 
-    private void startGame(Stage primaryStage) {
-        raceTyper = new RaceTyper(writer);
+    private void startGame(Stage primaryStage, String text) {
+        raceTyper = new RaceTyper(writer, text);
         Scene gameScene = new Scene(raceTyper.createContent(), 800, 400);
         primaryStage.setScene(gameScene);
         raceTyper.start(primaryStage);

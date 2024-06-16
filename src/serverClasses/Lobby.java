@@ -1,9 +1,6 @@
 package serverClasses;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class Lobby implements Serializable, Runnable {
     private String lobbyName;
@@ -12,9 +9,21 @@ public class Lobby implements Serializable, Runnable {
     private HashMap<Connection, Integer> playerProgress = new HashMap<>();
     private HashMap<Connection, Boolean> playerReadyStatus = new HashMap<>();
     private boolean countdownStarted = false;
+    private String gameText;
+    private String[] texts = {
+            "There are 10 types of people in the world: those who understand binary and those who don't.",
+            "Why do Java developers wear glasses? Because they don’t see sharp.",
+            "Debugging: Being the detective in a crime movie where you are also the murderer.",
+            "Why do programmers prefer dark mode? Because lights attracts bugs!",
+            "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?",
+            "Programming is like writing a book... except if you miss out a single comma on page 126, the whole thing makes no sense.",
+            "Why do programmers hate nature? It has too many bugs.",
+            "In order to understand recursion, you must first understand recursion"
+    };
 
     public Lobby(String name) {
         this.lobbyName = name;
+        this.gameText = getRandomText();
         new Thread(this).start(); // Thread for the lobby itself
     }
 
@@ -50,8 +59,15 @@ public class Lobby implements Serializable, Runnable {
                     throw new RuntimeException(e);
                 }
             }
-            players.forEach(player -> player.writeString("start game"));
+            String selectedText = getRandomText();
+            players.forEach(player -> player.writeString("start game" + selectedText));
         }).start();
+    }
+
+    private String getRandomText() {
+        Random random = new Random();
+        int randomIndex = random.nextInt(texts.length);
+        return texts[randomIndex];
     }
 
     private boolean allPlayersReady() {
@@ -104,13 +120,21 @@ public class Lobby implements Serializable, Runnable {
         playerProgress.entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
                 .forEach(entry -> leaderboard.append(entry.getKey().getUsername())
-                        .append(": ").append(entry.getValue()).append(" WPM\n"));
-        String leaderboardText = "leaderboard:" + leaderboard.toString();
+                        .append(": ").append(entry.getValue()).append(" WPM,"));
+        String leaderboardText = "leaderboard;" + leaderboard;
         players.forEach(player -> player.writeString(leaderboardText));
     }
 
     public void startGame() {
-        players.forEach(player -> player.writeString("start game"));
+        players.forEach(player ->{
+            try {
+                player.writeString("start game");
+                Thread.sleep(10);
+                player.writeString(this.gameText);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        } );
     }
 
     public String getLobbyName() {
