@@ -24,9 +24,9 @@ public class Server {
     }
 
     private static void createTestLobbies() {
-        lobbies.add(new Lobby("test lobby 1"));
-        lobbies.add(new Lobby("test lobby 2"));
-        lobbies.add(new Lobby("test lobby 3"));
+        lobbies.add(new Lobby("Lobby 1"));
+        lobbies.add(new Lobby("Lobby 2"));
+        lobbies.add(new Lobby("Lobby 3"));
     }
 
     public static void disconnect(Connection connection) {
@@ -81,6 +81,7 @@ class Connection implements Serializable {
     private final transient ObjectInputStream inputStream;
     private final transient ObjectOutputStream outputStream;
     private String username = null;
+    private boolean finishedGame = false;
 
     public Connection(Socket socket) {
         this.socket = socket;
@@ -147,10 +148,15 @@ class Connection implements Serializable {
         } else if (line.startsWith("finished:")) {
             int wpm = Integer.parseInt(line.split(":")[1]);
             Server.updatePlayerProgress(username, wpm);
+            finishedGame = true;
         } else if (line.startsWith("ready:")) {
             boolean isReady = Boolean.parseBoolean(line.split(":")[1]);
             Server.setPlayerReady(username, isReady);
         }
+    }
+
+    public boolean hasFinished() {
+        return this.finishedGame;
     }
 
     public String getUsername() {
@@ -173,5 +179,9 @@ class Connection implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setUnready() {
+        finishedGame = false;
     }
 }

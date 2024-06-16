@@ -5,26 +5,39 @@ import java.util.*;
 public class Lobby implements Serializable, Runnable {
     private String lobbyName;
     private final int maxPlayers = 5;
-    private List<Connection> players = Collections.synchronizedList(new ArrayList<>());
-    private HashMap<Connection, Integer> playerProgress = new HashMap<>();
-    private HashMap<Connection, Boolean> playerReadyStatus = new HashMap<>();
-    private boolean countdownStarted = false;
+    private List<Connection> players;
+    private HashMap<Connection, Integer> playerProgress;
+    private HashMap<Connection, Boolean> playerReadyStatus;
+    private boolean countdownStarted;
     private String gameText;
     private String[] texts = {
             "There are 10 types of people in the world: those who understand binary and those who don't.",
-            "Why do Java developers wear glasses? Because they don’t see sharp.",
+            "Why do Java developers wear glasses? Because they don't see sharp.",
             "Debugging: Being the detective in a crime movie where you are also the murderer.",
             "Why do programmers prefer dark mode? Because lights attracts bugs!",
-            "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?",
+            "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?'",
             "Programming is like writing a book... except if you miss out a single comma on page 126, the whole thing makes no sense.",
             "Why do programmers hate nature? It has too many bugs.",
-            "In order to understand recursion, you must first understand recursion"
+            "In order to understand recursion, you must first understand recursion."
     };
 
     public Lobby(String name) {
         this.lobbyName = name;
+        players = Collections.synchronizedList(new ArrayList<>());
+        playerProgress = new HashMap<>();
+        playerReadyStatus = new HashMap<>();
+        countdownStarted = false;
         this.gameText = getRandomText();
         new Thread(this).start(); // Thread for the lobby itself
+    }
+
+    private void resetLobby() {
+        players = Collections.synchronizedList(new ArrayList<>());
+        playerProgress = new HashMap<>();
+        playerReadyStatus = new HashMap<>();
+        countdownStarted = false;
+        this.gameText = getRandomText();
+        new Thread(this).start();
     }
 
     @Override
@@ -39,7 +52,22 @@ public class Lobby implements Serializable, Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (checkIfAllPlayersAreDone()) {
+                try {
+                    Thread.sleep(5000);
+                    players.forEach(player -> {
+                        player.writeString("Game ended");
+                        player.setUnready();
+                    });
+
+                    players.clear();
+                    break;
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
+        resetLobby();
     }
 
     private void startCountdown() {
@@ -95,6 +123,12 @@ public class Lobby implements Serializable, Runnable {
             playerReadyStatus.remove(connection);
             updatePlayerCount();
         }
+    }
+
+    public boolean checkIfAllPlayersAreDone() {
+        if (!players.isEmpty()) {
+            return players.stream().allMatch(Connection::hasFinished);
+        } return false;
     }
 
     public void updatePlayerProgress(Connection player, int wpm) {

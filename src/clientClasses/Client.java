@@ -91,6 +91,7 @@ public class Client extends Application {
                         });
                         break;
                     case "Welkom!":
+                    case "Game ended":
                         writeString("send lobbies");
                         lobbies = (ArrayList<Lobby>) inputStream.readObject();
                         System.out.println(lobbies);
